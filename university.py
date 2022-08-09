@@ -55,6 +55,11 @@ class Course:
         TODO розробити!
         """
 
+        now = datetime.now()
+        if self.start_date <= now <= self.end_date:
+            return True
+        else: return False
+
     def __str__(self):
         return f"{self.name} course. Start: {self.start_date}. Finish: {self.end_date}"
 
@@ -76,6 +81,8 @@ class UniversityEmployee(Person, ABC):
         TODO розробити!
         """
 
+        return self.monthly_salary * 12
+
     @abstractmethod
     def answer_question(self, course: Course, question: str) -> bool:
         """Метод який викликається коли студент задає питання по навчанню.
@@ -85,6 +92,8 @@ class UniversityEmployee(Person, ABC):
         тому метод призначений для перепризначення у класах наслідниках.
         """
 
+    def __str__(self):
+        return f"University Employee {self.first_name} {self.last_name}, {self.age} years old. Monthly salary: {self.monthly_salary}"
 
 class Teacher(UniversityEmployee):
     """Клас Teacher який відповідає за вчителя університету.
@@ -120,12 +129,25 @@ class Teacher(UniversityEmployee):
         TODO розробити!
         """
 
+        if Course.is_active(course) == True and self.course == course:
+            return True
+        else:
+            return False
+
     def change_course(self, course: Course) -> bool:
         """Метод який призначений для того щоб призначати викладачу новий курс.
         Курс може бути призначений тільки якщо новий курс активний, тобто розпочався і не закінчився (див. метод Course.is_active).
         Якщо курс був успішно оновлений метод повертає True, в іншому випадку False.
         TODO розробити!
         """
+
+        if Course.is_active(course) == True and self.course == course:
+            self.course = course
+            return True
+        else: return False
+
+    def __str__(self):
+        return f"Teacher {self.first_name} {self.last_name}, {self.age} years old, course {self.course}"
 
 
 class Mentor(UniversityEmployee):
@@ -148,6 +170,7 @@ class Mentor(UniversityEmployee):
     ):
         super().__init__(first_name, last_name, birth_date, salary)
         self.courses = courses
+    list_question = []
 
     def answer_question(self, course: Course, question: str) -> bool:
         """Метод який викликається коли студент задає питання по навчанню.
@@ -199,6 +222,21 @@ class Mentor(UniversityEmployee):
         TODO розробити!
         """
 
+        number_of_courses = len(self.courses)
+        self.list_question.append(question.lower)
+        for item in self.courses:
+            if Course.is_active(item) == True :
+                if  self.list_question.count(question.lower) > 1:
+                    return True
+                else:
+                    for answer in self.list_question:
+                        if len(self.list_question) % number_of_courses == 0:
+                            print(self.list_question.count(answer))
+                            return True
+                        else:
+                            print(self.list_question.count(answer))
+                            return False
+
     def change_courses(self, courses: List[Course]) -> bool:
         """Метод який призначений для того щоб призначати ментори нові курси.
         Курс може бути призначений тільки якщо новий курс активний, тобто розпочався і не закінчився (див. метод Course.is_active).
@@ -208,12 +246,33 @@ class Mentor(UniversityEmployee):
         TODO розробити!
         """
 
+        for item in courses:
+            if Course.is_active(item) == True and self.courses.count(item) == 0:
+                self.courses.append(item)
+                return True
+            else: return False
+
+    def __str__(self):
+        return f"Mentor {self.first_name} {self.last_name}, {self.age} years old, course {[course.__str__() for course in self.courses]}"
+
 
 class Student(Person):
     """Клас Student який відповідає за студента університету.
     Наслідується від класу Person.
     Можна додавати додаткові атрибути для внутрішньої логіки.
     """
+
+    def __init__(self, first_name: str, last_name: str, birth_date: date):
+        super().__init__(first_name, last_name, birth_date)
+        self.list_marks = dict()
+        self.mark_list_date = [
+            (2, datetime(2022, 7, 28)),
+            (10, datetime(2022, 7, 27)),
+            (3, datetime(2022, 7, 26)),
+            (6, datetime(2022, 7, 25)),
+            (8, datetime(2022, 7, 24)),
+            (7, datetime(2022, 7, 23))
+        ]
 
     def add_mark(self, mark: int):
         """Метод який використовується вчителем коли той ставить оцінку стунденту.
@@ -224,11 +283,19 @@ class Student(Person):
         TODO розробити!
         """
 
+        if mark < 1:
+            mark = 1
+        elif mark > 12:
+            mark = 12
+        self.list_marks[datetime.now()] = mark
+
     def get_all_marks(self) -> List[int]:
         """Метод який використовується вчителем коли той ставить оцінку стунденту.
         Оцінка не залежить від предмету. Потрібно зберігати всі оцінки які коли неьудь були додані.
         TODO розробити!
         """
+
+        return list(self.list_marks.values())
 
     def get_avarage_mark(self) -> float:
         """Метод який повертає середню оцінку студенту по всіх наданих студенту оцінках.
@@ -237,6 +304,8 @@ class Student(Person):
         (2+10+3)/3=5
         TODO розробити!
         """
+
+        return sum(self.list_marks) / len(self.list_marks)
 
     def get_average_by_last_n_marks(self, n: int) -> float:
         """Метод який повертає середню оцінку за певною кількістю останніх оцінок.
@@ -247,6 +316,11 @@ class Student(Person):
         Перевірку n на число робити не потрібно, програма може повертати стандартну помилку виконання.
         TODO розробити!
         """
+
+        if n <= 0:
+            return 0
+        else:
+            return sum(self.get_all_marks()[-n:])/n
 
     def get_average_from_date(self, from_date: datetime) -> float:
         """Метод який повертає середню оцінку за певний період (від певної дати).
@@ -263,6 +337,14 @@ class Student(Person):
         TODO розробити!
         """
 
+        list_marks_date = []
+        for mark in self.list_marks_date:
+            if(mark[1] >= from_date):
+                list_marks_date.append(mark[0])
+        return sum(list_marks_date) / len(list_marks_date)
+
+    def __str__(self):
+        return f"Student {self.first_name} {self.last_name}, {self.age} years old"
 
 class University:
     """Клас University який зберігає студентів, працівників, та курси
@@ -286,13 +368,32 @@ class University:
         TODO розробити!
         """
 
+        monthly_salary_list = []
+        for employee in self.employees:
+            monthly_salary_list.append(employee.monthly_salary)
+        return sum(monthly_salary_list) / len(monthly_salary_list)
+
     def get_average_mark(self) -> float:
         """Метод який розраховує і повертає середню оцінку всіх студентів університету.
         Для цього потрібно враховувати середню оцінку кожно студента.
         TODO розробити!
         """
 
+        average_mark_list = []
+        for student_item in self.students:
+            average_mark_list.append(student_item.get_avarage_mark())
+        return sum(average_mark_list) / len(average_mark_list)
+
     def get_active_courses(self) -> List[Course]:
         """Метод повертає всі активні (в данний момент) курси (Course.is_active()).
         TODO розробити!
         """
+
+        activ_course = []
+        for x in range (len(self.courses)):
+            if self.courses[x].is_active() == True:
+                activ_course.append(self.courses[x].name)
+        return activ_course
+
+    def __str__(self):
+        return f"University {self.name} employees: {[employee.__str__() for employee in self.employees]}, students: {[student.__str__() for student in self.students]} "
